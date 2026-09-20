@@ -1,3 +1,14 @@
+/*
+Library Name: AMT630A On-Screen-Display (OSD)
+Created by: Michael Ogrinz, September 2026
+Contact: mike@ogrinz.com, https://youtube.com/@ogrinz_labs
+Description: A library for creating on-screen text and bitmap graphics over a live composite video signal for devices using the AMT630A video decoder and digital TFT-LCD panel-control SoC.
+Repository: https://github.com/mogrinz/AMT630A
+License: MIT License
+Changelog:
+v0.7.0 - 2026-09-20: Initial release.
+*/
+
 #include <Wire.h>
 #include <AMT630A_OSD.h>
 
