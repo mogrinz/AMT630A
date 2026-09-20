@@ -1,3 +1,14 @@
+/*
+Library Name: AMT630A On-Screen-Display (OSD)
+Created by: Michael Ogrinz, September 2026
+Contact: mike@ogrinz.com, https://youtube.com/@ogrinz_labs
+Description: A library for creating on-screen text and bitmap graphics over a live composite video signal for devices using the AMT630A video decoder and digital TFT-LCD panel-control SoC.
+Repository: https://github.com/mogrinz/AMT630A
+License: MIT License
+Changelog:
+v0.7.0 - 2026-09-20: Initial release.
+*/
+
 #include <AMT630A_OSD.h>
 #include "robot.h"
 
@@ -26,8 +37,9 @@ uint32_t lastMoveMs = 0;
 // Palette animation tuning
 // ------------------------------------------------------------
 
-// Palette index 6 is the yellow chest light in this robot image.
-static const uint8_t CHEST_PALETTE_INDEX = 6;
+// Palette index 5 is the yellow chest light in the bundled robot.h.
+// robot_palette[5] is 0x6DF (12-bit BGR), which decodes to RGB 0xFF,0xDD,0x66.
+static const uint8_t CHEST_PALETTE_INDEX = 5;
 
 // AMT630A bitmap colors are stored as 12-bit BGR: 0xBGR.
 // 0x00F = full red.
@@ -80,8 +92,7 @@ void setup()
     return;
   }
 
-  // robot.h is intentionally not part of this example.
-  // Copy/generate your own robot.h into the sketch directory.
+  // robot.h is bundled with this example.
   if (!display.loadBitmap(robot, robotHandle)) {
     printError("loadBitmap");
     return;
