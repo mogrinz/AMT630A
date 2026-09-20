@@ -1,3 +1,14 @@
+/*
+Library Name: AMT630A On-Screen-Display (OSD)
+Created by: Michael Ogrinz, September 2026
+Contact: mike@ogrinz.com, https://youtube.com/@ogrinz_labs
+Description: A library for creating on-screen text and bitmap graphics over a live composite video signal for devices using the AMT630A video decoder and digital TFT-LCD panel-control SoC.
+Repository: https://github.com/mogrinz/AMT630A
+License: MIT License
+Changelog:
+v0.7.0 - 2026-09-20: Initial release.
+*/
+
 #include "AMT630A_OSD.h"
 #include <string.h>
 
@@ -987,14 +998,3 @@ bool AMT630A_OSD::applyBlinkHardware(){
   bool ok=true;
   uint8_t fb35=readReg(DEV_OSD,0x35);
   uint8_t fb06=readReg(DEV_OSD,0x06);
-  if(fb35==0xFF||fb06==0xFF)ok=false;
-  if(ok){
-    fb35=(fb35&0xF8)|(_blinkWindow&0x07);
-    fb06=(fb06&0xC0)|(_blinkRateRaw&0x3F);
-    ok=writeReg(DEV_OSD,0x35,fb35)&&
-       writeReg(DEV_OSD,0x79,_blinkY)&&
-       writeReg(DEV_OSD,0x7A,(uint8_t)(_blinkY+_blinkHeight-1))&&
-       writeReg(DEV_OSD,0x7B,_blinkX)&&
-       writeReg(DEV_OSD,0x7C,(uint8_t)(_blinkX+_blinkWidth-1))&&
-       writeReg(DEV_OSD,0x06,fb06);
-  }
