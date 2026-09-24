@@ -732,6 +732,8 @@ AMT630A_OSD was developed by Mike Ogrinz with OpenAI collaboration through exten
 
 The hidden factory-menu investigation and the hypothesis that factory mode could avoid stock-MCU/external-I2C contention originated with Mike Ogrinz; firmware analysis and test-program development were performed collaboratively.
 
+Special thanks to [nocash](https://problemkaputt.de/x51specs.htm) for his work on the AMT630A custom firmware.
+
 # Version history
 
 See `CHANGELOG.md`.
