@@ -4,6 +4,10 @@ Arduino/ESP32 library for controlling the hardware on-screen display (OSD) engin
 
 **Version 0.7.0**
 
+## Project video
+
+[Watch the AMT630A OSD / Robby HUD project on YouTube](https://youtu.be/0eQ94DHOay0)
+
 The library exposes the AMT630A's five hardware OSD windows as a practical Arduino API for text, custom glyphs, 16-color 4bpp bitmaps, palette animation, opacity/video blending, scaling, blink regions, and window movement. It also includes a Python image converter and optional automation for entering the hidden factory menu on one hardware-tested three-button monitor firmware.
 
 > **Hardware status:** This project is based on hardware testing and reverse engineering of real AMT630A monitor boards. AMT630A products are not all guaranteed to use the same firmware, panel timing, keypad circuit, or exposed I2C connections. Features marked as hardware/firmware-specific should be treated accordingly.
@@ -700,7 +704,7 @@ The `Error` enum includes initialization, window, Index RAM, glyph, Font RAM, bi
 | `AnimatedWindows` | Moving text windows. |
 | `MultipleWindowBatchTest` | Batch-update behavior. |
 | `BitmapWindow` | Generated bitmap plus LargeFont ROM text. |
-| `RobotBitmapTest` | Moving bitmap; supply a generated `robot.h`. |
+| `RobotBitmapTest` | Moving bitmap using the included `robot.h`. |
 | `AnimatedBitmaps` | Multiple moving windows sharing a bitmap resource. |
 | `MixedAnimatedWindows` | Text and bitmap windows together. |
 | `HousePaletteBitmaps` | Multiple resources using one shared palette. |
