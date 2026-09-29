@@ -6,6 +6,7 @@ Description: A library for creating on-screen text and bitmap graphics over a li
 Repository: https://github.com/mogrinz/AMT630A
 License: MIT License
 Changelog:
+v0.7.1 - 2026-09-29: Restore source file accidentally truncated in v0.7.0.
 v0.7.0 - 2026-09-20: Initial release.
 */
 
@@ -998,3 +999,63 @@ bool AMT630A_OSD::applyBlinkHardware(){
   bool ok=true;
   uint8_t fb35=readReg(DEV_OSD,0x35);
   uint8_t fb06=readReg(DEV_OSD,0x06);
+  if(fb35==0xFF||fb06==0xFF)ok=false;
+  if(ok){
+    fb35=(fb35&0xF8)|(_blinkWindow&0x07);
+    fb06=(fb06&0xC0)|(_blinkRateRaw&0x3F);
+    ok=writeReg(DEV_OSD,0x35,fb35)&&
+       writeReg(DEV_OSD,0x79,_blinkY)&&
+       writeReg(DEV_OSD,0x7A,(uint8_t)(_blinkY+_blinkHeight-1))&&
+       writeReg(DEV_OSD,0x7B,_blinkX)&&
+       writeReg(DEV_OSD,0x7C,(uint8_t)(_blinkX+_blinkWidth-1))&&
+       writeReg(DEV_OSD,0x06,fb06);
+  }
+  relockFast();
+  if(!ok)return fail(I2CError);
+  _lastError=NoError;return true;
+}
+
+bool AMT630A_OSD::applyVisibility(){
+  if(!_begun)return fail(NotBegun);
+  uint8_t current=readOSDReg(0x05);if(current==0xFF)return fail(I2CError);
+  uint8_t ours=0;if(_osdVisible)for(uint8_t i=0;i<WINDOW_COUNT;++i)if(_windows[i].configured&&_windows[i].visible)ours|=(1u<<i);
+  uint8_t desired;
+  if(_factoryOSDCoexistence)desired=((current&0x1F)|ours);else desired=ours;
+  if(_blinkManaged){if(_blinkEnabled)desired|=0x20;else desired&=~0x20;}
+  else if(_factoryOSDCoexistence)desired|=(current&0x20);
+  else desired&=~0x20;
+  desired&=~0x40; // keep normal 1bpp per-cell text colors enabled
+  if(anyBitmapWindowVisible())desired|=0x80;else desired&=~0x80;
+  if(current!=desired&&!writeOSDConservative(0x05,desired))return false;
+  _lastError=NoError;return true;
+}
+
+void AMT630A_OSD::markAllDirty(uint8_t n){if(validWindow(n)&&_windows[n].cells)for(uint16_t i=0;i<_windows[n].cellCount;++i)_windows[n].cells[i].dirty=true;}
+void AMT630A_OSD::setIndexAddress(uint16_t addr){writeReg(DEV_OSD,0x0D,(addr>>8)&1);writeReg(DEV_OSD,0x00,addr&0xFF);}
+bool AMT630A_OSD::writeFontRamWord(uint16_t address,uint16_t data){address&=0x0FFF;if(!writeReg(DEV_OSD,0x0F,(address>>8)&0x0F)||!writeReg(DEV_OSD,0x02,address&0xFF))return false;return writeReg(DEV_OSD,0x04,(data>>8)&0xFF)&&writeReg(DEV_OSD,0x03,data&0xFF);}
+
+bool AMT630A_OSD::flushWindow(uint8_t n,bool force){
+  if(!validWindow(n))return fail(InvalidWindow);WindowState&w=_windows[n];if(!w.configured)return fail(WindowNotConfigured);
+  unlockFast();
+  for(uint16_t i=0;i<w.cellCount;++i){
+    if(!force&&!w.cells[i].dirty)continue;
+    uint16_t addr=w.indexStart+i;uint16_t glyph=w.cells[i].glyph;
+    setIndexAddress(addr);
+    if(!writeReg(DEV_OSD,0x0E,(glyph>>8)&3)||!writeReg(DEV_OSD,0x01,glyph&0xFF)){relockFast();return fail(I2CError);}
+    if(w.mode==TextMode){setIndexAddress(addr);if(!writeReg(DEV_OSD,0x10,w.cells[i].attr)){relockFast();return fail(I2CError);}}
+    w.cells[i].dirty=false;
+  }
+  relockFast();_lastError=NoError;return true;
+}
+
+uint8_t AMT630A_OSD::makeAttr(Color fg,Color bg)const{return (((uint8_t)bg&7)<<4)|((uint8_t)fg&7);}
+uint16_t AMT630A_OSD::asciiToGlyph(char c)const{if(c==' ')return 0;if(_fontMode==SmallFont){if(c>='0'&&c<='9')return 0x1C1+(c-'0');if(c>='A'&&c<='Z')return 0x1CB+(c-'A');if(c>='a'&&c<='z')return 0x1CB+(c-'a');return 0;}if(c>='0'&&c<='9')return 0x001+(c-'0');if(c>='A'&&c<='Z')return 0x00B+(c-'A');if(c>='a'&&c<='z')return 0x00B+(c-'a');switch(c){case '-':return 0x052;case '@':return 0x062;case ':':return 0x134;case '!':return 0x135;case '?':return 0x136;default:return 0x136;}}
+bool AMT630A_OSD::isHex(char c)const{return(c>='0'&&c<='9')||(c>='A'&&c<='F')||(c>='a'&&c<='f');}
+uint8_t AMT630A_OSD::hexValue(char c)const{if(c>='0'&&c<='9')return c-'0';if(c>='A'&&c<='F')return c-'A'+10;return c-'a'+10;}
+bool AMT630A_OSD::parseGlyphToken(const char*text,size_t i,uint16_t&glyph,size_t&consumed)const{consumed=0;if(!text||text[i]!='{'||!isHex(text[i+1])||!isHex(text[i+2])||!isHex(text[i+3])||text[i+4]!='}')return false;glyph=(hexValue(text[i+1])<<8)|(hexValue(text[i+2])<<4)|hexValue(text[i+3]);consumed=5;return true;}
+uint16_t AMT630A_OSD::cellIndex(const WindowState&w,uint8_t x,uint8_t y)const{return(uint16_t)y*w.columns+x;}
+bool AMT630A_OSD::inBounds(const WindowState&w,uint8_t x,uint8_t y)const{return x<w.columns&&y<w.rows;}
+
+const char *AMT630A_OSD::errorToString(Error e){switch(e){
+  case NoError:return "NoError";case NotBegun:return "NotBegun";case InvalidWindow:return "InvalidWindow";case WindowNotConfigured:return "WindowNotConfigured";case WindowsAlreadyConfigured:return "WindowsAlreadyConfigured";case InvalidDimensions:return "InvalidDimensions";case IndexRAMFull:return "IndexRAMFull";case InvalidGlyph:return "InvalidGlyph";case InvalidGlyphSlot:return "InvalidGlyphSlot";case CustomGlyphUnsupportedInSmallFont:return "CustomGlyphUnsupportedInSmallFont";case WrongWindowMode:return "WrongWindowMode";case FontRAMFull:return "FontRAMFull";case BitmapMemoryFull:return "BitmapMemoryFull";case InvalidBitmap:return "InvalidBitmap";case InvalidBitmapHandle:return "InvalidBitmapHandle";case BitmapSlotsFull:return "BitmapSlotsFull";case BitmapGeometryMismatch:return "BitmapGeometryMismatch";case BitmapUnsupportedInSmallFont:return "BitmapUnsupportedInSmallFont";case BitmapInUse:return "BitmapInUse";case CustomGlyphBitmapConflict:return "CustomGlyphBitmapConflict";case InvalidPaletteIndex:return "InvalidPaletteIndex";case InvalidOpacity:return "InvalidOpacity";case InvalidBrightness:return "InvalidBrightness";case InvalidScale:return "InvalidScale";case I2CError:return "I2CError";case AllocationFailed:return "AllocationFailed";case FactoryMenuNotConfigured:return "FactoryMenuNotConfigured";case FactoryMenuSequenceTooLong:return "FactoryMenuSequenceTooLong";default:return "UnknownError";
+}}

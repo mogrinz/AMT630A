@@ -6,6 +6,7 @@ Description: A library for creating on-screen text and bitmap graphics over a li
 Repository: https://github.com/mogrinz/AMT630A
 License: MIT License
 Changelog:
+v0.7.1 - 2026-09-29: Restore source file accidentally truncated in v0.7.0.
 v0.7.0 - 2026-09-20: Initial release.
 */
 
