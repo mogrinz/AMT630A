@@ -1,0 +1,26 @@
+name: Publish v0.7.1
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-v0.7.1.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Publish corrective release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/publish-v0.7.1.yml
+          git commit -m "Finalize v0.7.1 release"
+          git push origin HEAD:main
+          git tag v0.7.1
+          git push origin v0.7.1
+          gh release create v0.7.1 --title "AMT630A_OSD v0.7.1" --notes "Corrective release restoring the portion of src/AMT630A_OSD.cpp that was accidentally truncated in v0.7.0. No intended API or behavior changes."
