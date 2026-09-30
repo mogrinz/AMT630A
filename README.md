@@ -6,7 +6,7 @@ Arduino/ESP32 library for controlling the hardware on-screen display (OSD) engin
 
 ## Project video
 
-[Watch the AMT630A OSD / Robby HUD project on YouTube](https://youtu.be/0eQ94DHOay0)
+[![Watch the AMT630A OSD / Robby HUD project on YouTube](https://img.youtube.com/vi/0eQ94DHOay0/maxresdefault.jpg)](https://youtu.be/0eQ94DHOay0)
 
 The library exposes the AMT630A's five hardware OSD windows as a practical Arduino API for text, custom glyphs, 16-color 4bpp bitmaps, palette animation, opacity/video blending, scaling, blink regions, and window movement. It also includes a Python image converter and optional automation for entering the hidden factory menu on one hardware-tested three-button monitor firmware.
 
